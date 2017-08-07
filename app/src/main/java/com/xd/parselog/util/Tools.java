@@ -1,9 +1,9 @@
 package com.xd.parselog.util;
 
+import android.os.Environment;
 import android.util.Log;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.xd.parselog.db.DeviceDBManager;
 import com.xd.parselog.model.DeviceInfo;
 
@@ -13,8 +13,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by llj on 2017/8/4.
@@ -25,28 +29,26 @@ public class Tools {
      * 通过BufferedRandomAccessFile读取文件,并插入到数据库中去
      *
      * @param file     源文件
-     * @param encoding 文件编码
-     * @param pos      偏移量
-     * @return pins文件内容，pos当前偏移量
      */
-    public static Map<String, Object> bufferedRandomAccessFileReadLineAndInsertToDB(File file, String encoding, long pos) {
-        Map<String, Object> res = Maps.newHashMap();
+    public static void bufferedRandomAccessFileReadLineAndInsertToDB(File file) {
+//        Map<String, Object> res = Maps.newHashMap();
         List<DeviceInfo> deviceInfos = Lists.newArrayList();
         List<String> tempImeis = Lists.newArrayList();
-        res.put("pins", deviceInfos);
+//        res.put("pins", deviceInfos);
         BufferedRandomAccessFile reader = null;
         try {
             reader = new BufferedRandomAccessFile(file, "r");
-            reader.seek(pos);
+//            reader.seek(pos);
 
             String pin;
             while ((pin = reader.readLine()) != null) {
+                Log.i("llj", "pin------>>>" + pin);
                 if (StringUtils.isBlank(pin)) {
                     break;
                 }
-                String line = new String(pin.getBytes("8859_1"), encoding);
-                Log.i("llj", "line-------->>>>" + line);
-                DeviceInfo deviceInfo = getDeviceInfoByRead(line);
+//                String line = new String(pin.getBytes("GBK"), encoding);
+//                Log.i("llj", "line-------->>>>" + line);
+                DeviceInfo deviceInfo = getDeviceInfoByRead(pin);
                 if (deviceInfo == null) continue;
 
                 if (!tempImeis.contains(deviceInfo.imei)) {
@@ -92,7 +94,9 @@ public class Tools {
 //                    tempImeis.clear();
 //                }
 //            }
-            res.put("pos", reader.getFilePointer());
+
+
+//            res.put("pos", reader.getFilePointer());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -105,7 +109,7 @@ public class Tools {
             // 批量插入到数据库中去
             DeviceDBManager.getInstance().insertListDataBySql(deviceInfos);
         }
-        return res;
+//        return res;
     }
 
 
@@ -184,5 +188,44 @@ public class Tools {
         int length = target.length();
         int indexOf = target.indexOf(begin);
         return target.substring(indexOf + beginLength, length);
+    }
+
+
+
+    /**
+     * 复制文件到sdcard
+     * @param oldFile
+     */
+    public static void copyFile(String oldFile) {
+        File f = new File(oldFile); //比如  "/data/data/com.hello/databases/test.db"
+
+        String sdcardPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+        File o = new File(sdcardPath + "/copy.db"); //sdcard上的目标地址
+
+        if (f.exists()) {
+
+            FileChannel outF;
+
+            try {
+
+                outF = new FileOutputStream(o).getChannel();
+                Log.i("llj","开始复制！！！");
+                new FileInputStream(f).getChannel().transferTo(0, f.length(), outF);
+
+            } catch (FileNotFoundException e) {
+
+                e.printStackTrace();
+
+            } catch (IOException e) {
+
+                e.printStackTrace();
+
+            }
+
+            Log.i("llj","复制成功！！！");
+        }else {
+            Log.i("llj","需要复制的文件不存在！！！");
+        }
     }
 }
