@@ -46,8 +46,11 @@ public class Tools {
                 if (StringUtils.isBlank(pin)) {
                     break;
                 }
-//                String line = new String(pin.getBytes("GBK"), encoding);
-//                Log.i("llj", "line-------->>>>" + line);
+                if(isContainsInvalid(pin)){
+                    // 如果包含无效字符，放弃，进入下一次循环
+                    continue;
+                }
+
                 DeviceInfo deviceInfo = getDeviceInfoByRead(pin);
                 if (deviceInfo == null) continue;
 
@@ -110,6 +113,16 @@ public class Tools {
             DeviceDBManager.getInstance().insertListDataBySql(deviceInfos);
         }
 //        return res;
+    }
+
+    /**
+     * 判断是否包含无效字符
+     * @param resource
+     * @return
+     */
+    private static boolean isContainsInvalid(String resource){
+        return resource.contains("browser")||resource.contains("Browser")||resource.contains("LieBaoFast")
+                || resource.contains("baidu") || resource.contains("SohuNews") || resource.contains("MagicKitchen");
     }
 
 
