@@ -1,6 +1,5 @@
 package com.xd.parselog.util;
 
-import android.os.Environment;
 import android.util.Log;
 
 import com.google.common.collect.Lists;
@@ -19,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by llj on 2017/8/4.
@@ -54,14 +54,23 @@ public class Tools {
                 DeviceInfo deviceInfo = getDeviceInfoByRead(pin);
                 if (deviceInfo == null) continue;
 
-                if (!tempImeis.contains(deviceInfo.imei)) {
+                if(tempImeis.contains(deviceInfo.imei)) continue;
+
+//                if (!tempImeis.contains(deviceInfo.imei)) {
                     // 如果之前没有此条数据，则加入到集合中去
-                    tempImeis.add(deviceInfo.imei);
-                    deviceInfos.add(deviceInfo);
-                }
+
+                tempImeis.add(deviceInfo.imei);
+                deviceInfo.adid = getAndroidId();
+                deviceInfo.ua = getRandomUserAgent(deviceInfo);
+                deviceInfos.add(deviceInfo);
+//                }
 //                deviceInfos.add(getDeviceInfoByRead(line));
 
-                if (deviceInfos.size() >= 10000) {
+                int size = deviceInfos.size();
+                Log.i("test","androidId------------>>"+deviceInfo.adid);
+                Log.i("test","ua------------>>"+deviceInfo.ua);
+                Log.e("llj","已经插入 "+size+" 条数据！！");
+                if (size >= 10000) {
                     // 每10000条数据开始往数据库中写
                     Log.i("llj", "有10000条了开始插入数据到数据库中去");
                     // 批量插入到数据库中去
@@ -138,7 +147,7 @@ public class Tools {
     private static DeviceInfo getDeviceInfoByRead(String source) {
         DeviceInfo deviceInfo;
         try {
-            JSONObject resultObject = new JSONObject(subJson(source, "request kdxf  data  "));
+            JSONObject resultObject = new JSONObject(subJson(source, "client request data:"));
             deviceInfo = new DeviceInfo();
             deviceInfo.orientation = resultObject.getInt("orientation");
             deviceInfo.osv = resultObject.getString("osv");
@@ -151,6 +160,7 @@ public class Tools {
             deviceInfo.mac = resultObject.getString("mac");
             //TODO android id 有问题
 //            deviceInfo.adid = resultObject.getString("adid");
+//            deviceInfo.adid = getAndroidId();
             deviceInfo.batch_cnt = resultObject.getString("batch_cnt");
             deviceInfo.imei = resultObject.getString("imei");
             deviceInfo.adw = resultObject.getInt("adw");
@@ -161,7 +171,8 @@ public class Tools {
             deviceInfo.tramaterialtype = resultObject.getString("tramaterialtype");
             deviceInfo.devicetype = resultObject.getString("devicetype");
             deviceInfo.model = resultObject.getString("model");
-            deviceInfo.ua = resultObject.getString("ua");
+//            deviceInfo.ua = resultObject.getString("ua");
+//            deviceInfo.ua = getRandomUserAgent(deviceInfo);
         } catch (JSONException e) {
             e.printStackTrace();
             deviceInfo = null;
@@ -212,7 +223,8 @@ public class Tools {
     public static void copyFile(String oldFile) {
         File f = new File(oldFile); //比如  "/data/data/com.hello/databases/test.db"
 
-        String sdcardPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+//        String sdcardPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        String sdcardPath = "/mnt/shared/Other";
 
         File o = new File(sdcardPath + "/copy.db"); //sdcard上的目标地址
 
@@ -239,6 +251,92 @@ public class Tools {
             Log.i("llj","复制成功！！！");
         }else {
             Log.i("llj","需要复制的文件不存在！！！");
+        }
+    }
+
+
+    /**
+     * 根据deviceInfo 生成userAgent
+     * @param deviceInfo
+     * @return
+     *
+     * Mozilla/5.0 ((Linux; U; Android 4.4.4; Lenovo A2800-d Build/KTU84P)) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 OPR/12.7.0.4 Mobile Safari/537.36
+     * Mozilla/5.0 (Linux; U; Android 3.0; en-us; Xoom Build/HRI39) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0 Safari/534.13
+     * Mozilla/5.0 (Linux; U; Android 2.2.1; en-us; Nexus One Build/FRG83) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1
+     * Mozilla/5.0 (Linux; android 4.4.4; SAMSUNG-SM-N900A Build/tt) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/33.0.0.0 Mobile Safari/537.36
+     * Mozilla/5.0 (Linux; U; Android %s) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1
+     * Mozilla/5.0 (Linux; U; Android 4.3; zh-cn; Coolpad 8720L Build/JSS15Q) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30
+     * Mozilla/5.0 (Linux; U; Android 4.1.2; zh-cn; SCH-I759 Build/JZO54K) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30
+     *
+     * 48e62c2f9d71ff91
+     */
+    public static String getRandomUserAgent(DeviceInfo deviceInfo){
+        StringBuilder builder = new StringBuilder("Mozilla/5.0 (Linux; U; Android ");
+        builder.append(deviceInfo.osv);
+        builder.append("; zh-cn; ");
+        builder.append(deviceInfo.model);
+        builder.append("Build/");
+        builder.append(getRandomStr(5));
+        builder.append(") AppleWebKit/");
+        String floatStr = getRamdonFloat();
+        builder.append(floatStr);
+        builder.append(" (KHTML, like Gecko) Version/4.0 Mobile Safari/");
+        builder.append(floatStr);
+        return builder.toString();
+    }
+
+    /**
+     * 随机生成Android id
+     */
+    public static String getAndroidId() {
+        String str = "";
+        for (int i = 0; i < 16; i++) {
+            char temp = 0;
+            int key = (int) (Math.random() * 2);
+            switch (key) {
+                case 0:
+                    temp = (char) (Math.random() * 10 + 48);//产生随机数字
+                    break;
+                case 1:
+                    temp = (char) (Math.random()*6 + 'a');//产生a-f
+                    break;
+                default:
+                    break;
+            }
+            str = str + temp;
+        }
+        return str;
+    }
+
+    /**
+     * 随机获取多少位的字符串(大写)
+     * @param size
+     * @return
+     */
+    private static String getRandomStr(int size){
+        String base = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < size; i++) {
+            int number = random.nextInt(base.length());
+            sb.append(base.charAt(number));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 随机获取固定的几个float类型的字符串
+     * @return
+     */
+    private static String getRamdonFloat(){
+        Random random = new Random();
+        int number = random.nextInt(4);
+        if(number == 0){
+            return "534.30";
+        }else if (number == 1){
+            return "533.1";
+        }else {
+            return "537.36";
         }
     }
 }

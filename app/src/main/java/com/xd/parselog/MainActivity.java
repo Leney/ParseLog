@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        String path = Environment.getExternalStorageDirectory().getPath()+"/install.txt";
+                        String path = Environment.getExternalStorageDirectory().getPath()+"/log.txt";
                         File file = new File(path);
 
                         Tools.bufferedRandomAccessFileReadLineAndInsertToDB(file);
