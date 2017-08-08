@@ -36,6 +36,7 @@ public class Tools {
         List<String> tempImeis = Lists.newArrayList();
 //        res.put("pins", deviceInfos);
         BufferedRandomAccessFile reader = null;
+        int totalSize = 0;
         try {
             reader = new BufferedRandomAccessFile(file, "r");
 //            reader.seek(pos);
@@ -70,13 +71,15 @@ public class Tools {
                 Log.i("test","androidId------------>>"+deviceInfo.adid);
                 Log.i("test","ua------------>>"+deviceInfo.ua);
                 Log.e("llj","已经插入 "+size+" 条数据！！");
-                if (size >= 10000) {
+                if (size >= 100000) {
                     // 每10000条数据开始往数据库中写
                     Log.i("llj", "有10000条了开始插入数据到数据库中去");
                     // 批量插入到数据库中去
                     DeviceDBManager.getInstance().insertListDataBySql(deviceInfos);
                     deviceInfos.clear();
                     tempImeis.clear();
+                    totalSize += size;
+                    Log.i("llj","当前已经插入到数据库的条数---totalSize----->>>"+totalSize);
                 }
             }
 
@@ -120,6 +123,8 @@ public class Tools {
             Log.i("llj", "开始插入数据到数据库中去");
             // 批量插入到数据库中去
             DeviceDBManager.getInstance().insertListDataBySql(deviceInfos);
+            totalSize += deviceInfos.size();
+            Log.i("llj","插入到数据库的总条数---totalSize----->>>"+totalSize);
         }
 //        return res;
     }
@@ -268,14 +273,20 @@ public class Tools {
      * Mozilla/5.0 (Linux; U; Android 4.3; zh-cn; Coolpad 8720L Build/JSS15Q) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30
      * Mozilla/5.0 (Linux; U; Android 4.1.2; zh-cn; SCH-I759 Build/JZO54K) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30
      *
+     * Mozilla/5.0 (Linux; U; Android android 4.4.4; zh-cn; OPPO R7stBuild/IH5LM) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1
+
+     *
      * 48e62c2f9d71ff91
      */
     public static String getRandomUserAgent(DeviceInfo deviceInfo){
-        StringBuilder builder = new StringBuilder("Mozilla/5.0 (Linux; U; Android ");
+        StringBuilder builder = new StringBuilder("Mozilla/5.0 (Linux; U; ");
+        if(!deviceInfo.osv.contains("android") && !deviceInfo.osv.contains("Android")){
+            builder.append("Android ");
+        }
         builder.append(deviceInfo.osv);
         builder.append("; zh-cn; ");
         builder.append(deviceInfo.model);
-        builder.append("Build/");
+        builder.append(" Build/");
         builder.append(getRandomStr(5));
         builder.append(") AppleWebKit/");
         String floatStr = getRamdonFloat();

@@ -3,9 +3,11 @@ package com.xd.parselog;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.xd.parselog.db.DeviceDBManager;
 import com.xd.parselog.util.Tools;
 
 import java.io.File;
@@ -24,6 +26,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button exportBtn = (Button) findViewById(R.id.export_db_btn);
         exportBtn.setOnClickListener(this);
 
+        Button curDeviceCountBtn = (Button) findViewById(R.id.cur_device_count);
+        curDeviceCountBtn.setOnClickListener(this);
+
     }
 
     @Override
@@ -34,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        String path = Environment.getExternalStorageDirectory().getPath()+"/log.txt";
+                        String path = Environment.getExternalStorageDirectory().getPath()+"/log.data";
                         File file = new File(path);
 
                         Tools.bufferedRandomAccessFileReadLineAndInsertToDB(file);
@@ -50,6 +55,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                Log.i("llj","file.exists()-------->>>"+file.exists());
 
                 Tools.copyFile("/data/data/com.xd.parselog/databases/DeviceInfoDb");
+                break;
+            case R.id.cur_device_count:
+                // 当前设备条数
+                int count = DeviceDBManager.getInstance().getDataCount();
+                Log.i("llj","count---------->>>"+count);
                 break;
         }
     }

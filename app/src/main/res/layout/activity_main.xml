@@ -18,4 +18,10 @@
         android:layout_height="wrap_content"
         android:text="导出数据库文件"/>
 
+    <Button
+        android:id="@+id/cur_device_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="当前数据库中设备条数"/>
+
 </LinearLayout>
